@@ -1,30 +1,33 @@
-clear all;
-clc;
-close all;
-
-
-[pointsX, pointsY] =  meshgrid([1 : 0.1 : 5], [1 : 0.1 : 5]);
-
-l = 0.5/sqrt(2);
-
-
-signal_std = 1;
-
-noise = 0;
-
-kernel = signal_std^2 * exp (- squareform(pdist([pointsX(:), pointsY(:)])).^2 / (2 * l^2) ) + noise^2 * eye(numel(pointsX));
-
-
-R = mvnrnd( zeros(numel(pointsX), 1) , kernel, 1);
-
-R = reshape(R, size(pointsX));
-
-surf(R)
-
-% plot(points, R);
-
-
-% hold on;
-% axis([1 100 -20 20]);
-
-
+ % Choose a kernel (covariance function) 
+kernel = 1; 
+ 
+switch kernel
+    case 1; k =@(x,y) 1*x'*y; % Linear 
+    case 2; k =@(x,y) 1*min(x,y); % Brownian
+    case 3; k =@(x,y) exp(-100*(x-y)'*(x-y)) % Squared exponential
+    case 4; k =@(x,y) exp(-1*sqrt((x-y)'*(x-y)))
+    case 5; k =@(x,y) exp(-1*sin(50*pi*(x-y))^2) % Periodic
+    case 6; k =@(x,y) exp(-100*min(abs(x-y), abs(x+y))^2)
+end  
+        
+% Choose points at which to sample 15
+x= (0:.5:1); 
+n = length(x); 
+ 
+% Construct the covariance matrix 
+C = zeros(n,n)
+for i = 1:n 
+    for j = 1:n 
+        C(i,j)= k(x(i),x(j));
+    end
+end
+ 
+% Sample from the Gaussian process at these 
+u = randn(n,1); % sample u ~ N(0, I)
+[A,S, B] = svd(C); % factor C = ASB'
+z = A*sqrt(S)*u; % z = A S^.5 u 
+ 
+% Plot 
+figure(2); hold on; clf
+plot(x,z,'.-')
+axis([0, 1, -2, 2])
