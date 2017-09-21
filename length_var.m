@@ -1,21 +1,25 @@
+clear all;
+clc;
+close all;
+
  % Choose a kernel (covariance function) 
 kernel = 1; 
  
 switch kernel
-    case 1; k =@(x,y) 1*x'*y; % Linear 
-    case 2; k =@(x,y) 1*min(x,y); % Brownian
-    case 3; k =@(x,y) exp(-100*(x-y)'*(x-y)) % Squared exponential
+    case 1; k =@(x,y) 0.0005 * [x ; -50*x^2; -2*x^3;x^4]'*[y; -50*y^2; -2*y^3;y^4]; % Linear 
+    case 2; k =@(x,y) 1 * min(x,y); % Brownian
+    case 3; k =@(x,y) exp(-1*(x-y)'*(x-y)) % Squared exponential
     case 4; k =@(x,y) exp(-1*sqrt((x-y)'*(x-y)))
-    case 5; k =@(x,y) exp(-1*sin(50*pi*(x-y))^2) % Periodic
-    case 6; k =@(x,y) exp(-100*min(abs(x-y), abs(x+y))^2)
+    case 5; k =@(x,y) exp(-5*sin((x-y))^2) % Periodic
+    case 6; k =@(x,y) exp(-1*min(abs(x-y), abs(x+y))^2)
 end  
         
 % Choose points at which to sample 15
-x= (0:.5:1); 
+x= (-10:1:10); 
 n = length(x); 
  
 % Construct the covariance matrix 
-C = zeros(n,n)
+C = zeros(n,n);
 for i = 1:n 
     for j = 1:n 
         C(i,j)= k(x(i),x(j));
@@ -30,4 +34,4 @@ z = A*sqrt(S)*u; % z = A S^.5 u
 % Plot 
 figure(2); hold on; clf
 plot(x,z,'.-')
-axis([0, 1, -2, 2])
+% axis([0, 1, -2, 2])
