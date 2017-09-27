@@ -20,7 +20,7 @@ hold on;
 % axis([1 100 -20 20]);
 
 
-frequency = 50;
+frequency = 40;
 points_train = points(1 : frequency : end);
 points_train_target = sin(points_train) + 0.05 * randn(size(points_train));
 
