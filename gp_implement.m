@@ -1,10 +1,20 @@
 clear all;
 clc;
 close all;
+GRID = 2;
 
 points = [-30 : 0.1 : 30]';
 
 
+[stateX, stateY] = meshgrid(-GRID: 1 :GRID, -GRID: 1 :GRID);
+actions = [0 1; 1 0; 0 -1; -1 0];
+
+ 
+state_action_space = [repmat([stateX(:) stateY(:)], size(actions, 1), 1) repmat(actions, numel(stateX), 1)];
+
+% surf(stateX, stateY, stateX.^2 + stateY.^2);
+
+pause();
 l = 6/sqrt(2);
 
 signal_std = 2;
