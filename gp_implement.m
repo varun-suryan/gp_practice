@@ -8,6 +8,7 @@ alpha_ = 0.8;
 % Create the state action space in 1-D
 states = [-GRID : 1 : GRID]';
 actions = [-1; 1]; 
+num_of_episodes = 50;
 
 design_matrix = [repmat(states, numel(actions), 1) repmat(actions, numel(states), 1) 10/(1 - gamma_) * ones(numel(states) * numel(actions), 1)];
 
@@ -48,33 +49,41 @@ mean_ = zeros(size(design_matrix, 1), 1);
 
 figure();
 % hold on;
+record = [];
 
-for i = 1 : 20
-	EPISODE = i
+for EPISODE_number = 1 : num_of_episodes
+	EPISODE = EPISODE_number
 	curr_state = -1;
 	while curr_state ~= GRID
+
+		% Choose the action based on Optimism
 		if rand <= epsilon
 			action = datasample([-1 1], 1);
 		else
 			state_index = find(design_matrix(:, 1) == curr_state);
 			temp = design_matrix(state_index, :);
-
 			optimism = diag(kernel_);
 			[M, I] = max(temp(:, 3) + 1.96 * optimism(state_index) );
 			action = temp(I, 2);
 		end
-
-	% next_state = (max(min(curr_state(1) + action(1), GRID), -GRID) , max(min(curr_state(2) + action(2), GRID), -GRID));
+		
+		% Calculate the next state
 		next_state = max(min(curr_state + action, GRID), -GRID);
-		[~, indexing, ~] = intersect(design_matrix(:, 1 : end -1), [curr_state action], 'rows');
 
-		observation = (1 - alpha_) * design_matrix(indexing, end) + alpha_ * reward_dynamic(next_state, GRID) + alpha_ * gamma_ * max(design_matrix(find(design_matrix(:, 1) == next_state), end));
+		observation = (1 - alpha_) * max(design_matrix(state_index, end)) + alpha_ * reward_dynamic(next_state, GRID) + alpha_ * gamma_ * max(design_matrix(find(design_matrix(:, 1) == next_state), end));
 	
-		coeff = 1 / (kernel_(indexing, indexing) + noise^2 * eye(numel(indexing)));
+		record = [record; [curr_state action observation]];
+		[~, indexing, ~] = intersect(design_matrix(:, 1 : end -1), record(:, 1 : end - 1), 'rows');
 
-		mean_ = mean_ + kernel_(:, indexing) * coeff * (observation - mean_(indexing));	
+		coeff = pinv(kernel_(indexing, indexing) + noise^2 * eye(numel(indexing)));
+		if numel(coeff) == 1
+			mean_ = mean_ + kernel_(:, indexing) * coeff * (record(1 : end, end) - mean_(indexing));	
+		else
+			mean_ = mean_ + kernel_(:, indexing) * coeff * (record(1 : end - 1, end) - mean_(indexing));
+		end
+
 		kernel_ = kernel_ - kernel_(:, indexing) * coeff * kernel_(indexing, :) + noise^2;
-		design_matrix(:, end) = mean_;
+		% design_matrix(:, end) = mean_;
 		% y_pred, sigma = gp.predict(test, return_std = True)
 		curr_state = next_state;
 		scatter(curr_state, 0);
@@ -110,7 +119,7 @@ function reward = reward_dynamic(state, GRID)
 	if state == GRID
 		reward = 10;
 	elseif state == -GRID
-		reward = -10	
+		reward = -10;	
 	else
 		reward = -1;
 	end
