@@ -9,7 +9,7 @@ alpha_ = 0.8;
 states = [-GRID : 1 : GRID]';
 actions = [-1; 1]; 
 
-design_matrix = [repmat(states, numel(actions), 1) repmat(actions, numel(states), 1) zeros(numel(states) * numel(actions), 1)];
+design_matrix = [repmat(states, numel(actions), 1) repmat(actions, numel(states), 1) 10/(1 - gamma_) * ones(numel(states) * numel(actions), 1)];
 
 
 % Append initial Q-values with state action space
@@ -46,11 +46,12 @@ mean_ = zeros(size(design_matrix, 1), 1);
 % points_train_target = sin(points_train) + 0.05 * randn(size(points_train));
 
 
-
+figure();
+% hold on;
 
 for i = 1 : 20
-
-	curr_state = 0;
+	EPISODE = i
+	curr_state = -1;
 	while curr_state ~= GRID
 		if rand <= epsilon
 			action = datasample([-1 1], 1);
@@ -58,7 +59,7 @@ for i = 1 : 20
 			state_index = find(design_matrix(:, 1) == curr_state);
 			temp = design_matrix(state_index, :);
 
-			optimism = diag(kernel_)
+			optimism = diag(kernel_);
 			[M, I] = max(temp(:, 3) + 1.96 * optimism(state_index) );
 			action = temp(I, 2);
 		end
@@ -75,9 +76,11 @@ for i = 1 : 20
 		kernel_ = kernel_ - kernel_(:, indexing) * coeff * kernel_(indexing, :) + noise^2;
 		design_matrix(:, end) = mean_;
 		% y_pred, sigma = gp.predict(test, return_std = True)
-		design_matrix	
-		curr_state = next_state
-	pause()
+		curr_state = next_state;
+		scatter(curr_state, 0);
+		axis([-GRID GRID -1 1]);
+		% hold on;
+	pause(0.02)
 	end
 end
 
