@@ -3,7 +3,7 @@ clc;
 close all;
 
  % Choose a kernel (covariance function) 
-kernel = 1; 
+kernel = 3; 
  
 switch kernel
     case 1; k =@(x,y) 0.0005 * [x ; -50*x^2; -2*x^3;x^4]'*[y; -50*y^2; -2*y^3;y^4]; % Linear 
@@ -15,7 +15,7 @@ switch kernel
 end  
         
 % Choose points at which to sample 15
-x= (-10:1:10); 
+x= (-30:0.25:30); 
 n = length(x); 
  
 % Construct the covariance matrix 

@@ -26,3 +26,4 @@ post_mean = kernel(151:end, 1:150) * pinv(kernel(1:150, 1:150) + noise^2 * eye(s
 R_post = mvnrnd( post_mean , round(abs(post_kernel),3), 1);
 
 plot(post_mean, 'g');
+
