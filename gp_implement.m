@@ -2,28 +2,59 @@ clear all;
 clc;
 close all;
 
-points = [-10 : 0.1 : 10]';
+points = [-20 : 0.1 : 20]';
 
 
-
-l = 20/sqrt(2);
+l = 6/sqrt(2);
 
 signal_std = 1;
-noise = 1.0;
-kernel = signal_std^2 * exp (- squareform(pdist(points)).^2 / (2 * l^2) ) + noise^2 * eye(numel(points));
-R_prior = mvnrnd( zeros(numel(points), 1) , kernel, 1);
+noise = 0.2;
+
+kernel_ = signal_std^2 * exp (- squareform(pdist(points)).^2 / (2 * l^2) ) + noise^2 * eye(numel(points));
+mean_ = zeros(numel(points), 1);
+
+R_prior = mvnrnd( mean_ , kernel_, 1);
 
 plot(points, R_prior,'r');
 hold on;
 % axis([1 100 -20 20]);
 
-points_train = [points 100 * sign(points)];
+frequency = 40;
+points_train = points(1 : frequency : end);
+points_train_target = sin(points_train) + 2 * randn(size(points_train));
 
-post_kernel = kernel(151:end, 151:end) - kernel(151:end, 1:150) * pinv(kernel(1:150, 1:150) + noise^2 * eye(size(150))) * kernel(1:150, 151:end);
 
-post_mean = kernel(151:end, 1:150) * pinv(kernel(1:150, 1:150) + noise^2 * eye(size(150))) * points_train(1:150, 2);
 
-R_post = mvnrnd( post_mean , round(abs(post_kernel),3), 1);
+% Sequential Implementation
+count = 1;
+for indexing = 1 : frequency : size(points, 1);
+	coeff = 1 / kernel_(indexing, indexing) + noise^2 * eye(numel(indexing));
+	mean_ = mean_ + kernel_(:, indexing) * coeff * (points_train_target(count) - mean_(indexing));	
+	kernel_ = kernel_ - kernel_(:, indexing) * coeff * kernel_(indexing, :);
+	count = count + 1;
+end
 
-plot(post_mean, 'g');
+figure();
+plot(points ,mean_, 'g')
+% plot(points, R_post,'g');
+hold on;
+scatter(points_train, points_train_target)
+
+kernel_ = signal_std^2 * exp (- squareform(pdist(points)).^2 / (2 * l^2) ) + noise^2 * eye(numel(points));
+mean_ = zeros(numel(points), 1);
+
+
+% Implementation in one Stroke
+indexing = 1 : frequency : size(points, 1);
+coeff = pinv(kernel_(indexing, indexing) + noise^2 * eye(numel(indexing)));
+mean_ = mean_ + kernel_(:, indexing) * coeff * (points_train_target - mean_(indexing));	
+kernel_ = kernel_ - kernel_(:, indexing) * coeff * kernel_(indexing, :) + noise^2;
+
+
+% R_post = mvnrnd( mean_, kernel_, 1);
+figure();
+plot(points ,mean_, 'g')
+% plot(points, R_post,'g');
+hold on;
+scatter(points_train, points_train_target)
 
