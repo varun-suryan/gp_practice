@@ -50,10 +50,12 @@ mean_ = zeros(size(design_matrix, 1), 1);
 figure();
 % hold on;
 record = [];
+plot_reward = [];
 
 for EPISODE_number = 1 : num_of_episodes
 	EPISODE = EPISODE_number
 	curr_state = -1;
+	total_reward = 0;
 	while curr_state ~= GRID
 
 		% Choose the action based on Optimism
@@ -71,27 +73,33 @@ for EPISODE_number = 1 : num_of_episodes
 		next_state = max(min(curr_state + action, GRID), -GRID);
 
 		observation = (1 - alpha_) * max(design_matrix(state_index, end)) + alpha_ * reward_dynamic(next_state, GRID) + alpha_ * gamma_ * max(design_matrix(find(design_matrix(:, 1) == next_state), end));
-	
+		total_reward = total_reward + reward_dynamic(next_state, GRID);
 		record = [record; [curr_state action observation]];
-		[~, indexing, ~] = intersect(design_matrix(:, 1 : end -1), record(:, 1 : end - 1), 'rows');
+		[~, indexing] = ismember(record(:, 1 : end - 1), design_matrix(:, 1 : end -1), 'rows');
 
+		% size(record, 1)
+		% size(indexing)
+		% pause();
+		
 		coeff = pinv(kernel_(indexing, indexing) + noise^2 * eye(numel(indexing)));
-		if numel(coeff) == 1
-			mean_ = mean_ + kernel_(:, indexing) * coeff * (record(1 : end, end) - mean_(indexing));	
-		else
-			mean_ = mean_ + kernel_(:, indexing) * coeff * (record(1 : end - 1, end) - mean_(indexing));
-		end
 
+		mean_ = mean_ + kernel_(:, indexing) * coeff * (record(1 : end, end) - mean_(indexing));	
 		kernel_ = kernel_ - kernel_(:, indexing) * coeff * kernel_(indexing, :) + noise^2;
 		% design_matrix(:, end) = mean_;
 		% y_pred, sigma = gp.predict(test, return_std = True)
 		curr_state = next_state;
+		
 		scatter(curr_state, 0);
 		axis([-GRID GRID -1 1]);
+		
 		% hold on;
 	pause(0.02)
 	end
+	plot_reward = [plot_reward; total_reward];
 end
+
+figure();
+plot (plot_reward) 
 
 % Sequential Implementation
 % for indexing = 1 : frequency : size(points, 1);
