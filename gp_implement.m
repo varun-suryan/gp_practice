@@ -7,8 +7,8 @@ gamma_ =0.9;
 alpha_ = 0.6;
 
 
-v = VideoWriter('q_learning');
-open(v);
+% v = VideoWriter('q_learning');
+% open(v);
 
 % Create the state action space in 2-D
 [stateX, stateY] = meshgrid(-GRID: 1 :GRID, -GRID: 1 :GRID);
@@ -80,15 +80,15 @@ curr_state = [-GRID -GRID];
 		observation = (1 - alpha_) * design_matrix(indexing, end) + alpha_ * reward_dynamic(next_state, action, GRID) + alpha_ * gamma_ * argmax(end);
 		design_matrix(indexing, end) = observation;	
 
-		scatter(curr_state(1), curr_state(2), 100, 'filled');
-		axis([-GRID GRID -GRID GRID]);
-		frame = getframe(gcf);
-   		writeVideo(v,frame);
+		% scatter(curr_state(1), curr_state(2), 100, 'filled');
+		% axis([-GRID GRID -GRID GRID]);
+		% frame = getframe(gcf);
+  %  		writeVideo(v,frame);
 		% grid on;
 
 		curr_state = next_state;
 		
-		pause(0.01);
+		% pause(0.01);
 	end
 end
 close(v);
